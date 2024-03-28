@@ -8,7 +8,6 @@ liveBtn.addEventListener("click", () => {
 const init = async () => {
   const stream = await navigator.mediaDevices.getUserMedia({
     video: true,
-    audio: true,
   });
   document.getElementById("video").srcObject = stream;
   const peer = createPeer();
@@ -19,7 +18,7 @@ const createPeer = () => {
   const peer = new RTCPeerConnection({
     iceServers: [
       {
-        urls: "stun:stun.stunprotocol.org",
+        urls: "stun:stun.l.google.com:19320",
       },
     ],
   });
