@@ -31,7 +31,7 @@ const handleNegotiationEvent = async (peer)=>{
     let payload = {
         sdp: peer.localDescription,
     }
-    const {data} = await axios.post('http://localhost:4001/consumer',payload);
+    const {data} = await axios.post('https://livestreaming-sbyq.onrender.com/consumer',payload);
     const desc = new RTCSessionDescription(data.sdp);
     peer.setRemoteDescription(desc).catch((e)=>console.log(e));
 };
