@@ -3,7 +3,20 @@ const bodyParser = require("body-parser");
 const wrtc = require("wrtc");
 const app = express();
 const cors = require('cors');
+const { Server } = require("socket.io");
 //get sender stream
+
+const server = require("http").createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    transports: ["websocket", "polling"],
+    credentials: true,
+  },
+  allowEIO3: true,
+});
+
 let senderStream;
 
 
@@ -67,7 +80,79 @@ app.post("/consumer", async ({ body }, res) => {
     }
 });
 
+io.on("connection", (socket) => {
+    console.log(`Client connected: ${socket.id}`);
 
-app.listen(4001,()=>{
+
+    socket.on('broadcast',(data)=>{
+        handleSocketBrodCast(data,socket,io);
+    });
+
+    socket.on('consume',(data)=>{
+        handleSocketStreamCon(data,socket,io);
+    })
+
+    socket.on('disconnect', () => {
+        console.log('A user disconnected');
+    });
+});
+
+const handleSocketBrodCast = async (data,socket,io)=>{
+    try {
+        const peer = new wrtc.RTCPeerConnection({
+            iceServers: [
+                {
+                    urls: "stun:stun.l.google.com:19320",
+                },
+            ],
+        });
+        peer.ontrack = (e) => handleTrackEvent(e, peer);
+        const desc = new wrtc.RTCSessionDescription(data.sdp);
+        await peer.setRemoteDescription(desc);
+        const answer = await peer.createAnswer();
+        await peer.setLocalDescription(answer);
+
+        console.log('peer',data)
+        const payload = {
+            sdp: peer.localDescription,
+            peer:data.peer
+        };
+
+        io.to(socket.id).emit('broadcast',payload);
+
+        // res.json(payload);
+    } catch (error) {
+        console.error("Error in / socket broadcast endpoint:", error);
+        // res.status(500).json({ error: "Internal server error" });
+    }
+}
+
+const handleSocketStreamCon = async (data,socket,io)=>{
+    try {
+        const peer = new wrtc.RTCPeerConnection({
+            iceServers: [
+                {
+                    urls: "stun:stun.l.google.com:19320",
+                },
+            ],
+        });
+        const desc = new wrtc.RTCSessionDescription(data.sdp);
+        await peer.setRemoteDescription(desc);
+        senderStream.getTracks().forEach((e) => peer.addTrack(e, senderStream));
+        const answer = await peer.createAnswer();
+        await peer.setLocalDescription(answer);
+        const payload = {
+            sdp: peer.localDescription,
+        };
+        io.to(socket.id).emit('consume',payload);
+        // res.json(payload);
+    } catch (error) {
+        console.error("Error in /socket consumer endpoint:", error);
+        // res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+
+server.listen(4001,()=>{
     console.log('server running on port 4001.');
 })
