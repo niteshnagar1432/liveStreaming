@@ -24,6 +24,10 @@ app.use(express.static("public"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+app.get('/',(req,res)=>{
+  res.json({status:true,message:'this is testing route.'});
+})
+
 app.post("/broadcast", async ({ body }, res) => {
   try {
     const peer = new wrtc.RTCPeerConnection({
