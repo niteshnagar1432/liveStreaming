@@ -18,7 +18,7 @@ const createPeer = () => {
   const peer = new RTCPeerConnection({
     iceServers: [
       {
-        urls: "stun:stun.l.google.com:19320",
+        urls: "stun:stun.l.google.com:19302",
       },
     ],
   });
@@ -34,7 +34,7 @@ const handleNegotiationEvent = async (peer) => {
   let payload = {
     sdp: peer.localDescription,
   };
-  const { data } = await axios.post("https://livestreaming-sbyq.onrender.com/broadcast", payload);
+  const { data } = await axios.post("http://15.206.243.145:4001/broadcast", payload);
   const desc = new RTCSessionDescription(data.sdp);
   peer.setRemoteDescription(desc).catch((e) => console.log(e));
 };
